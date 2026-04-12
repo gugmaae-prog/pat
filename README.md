@@ -1,4 +1,6 @@
-PAT AI Assistant
+PAT AI Assistant and Pat Dashboard 
+
+pat Ai
 A clean, minimalist ChatGPT-style AI assistant that learns from your habits, thought process, and workflow to continuously improve.
 Core Features
 •  Clean minimalist ChatGPT-style UI - No emojies and non colorful ui 
@@ -102,3 +104,9 @@ It translates the execution plan into:
 - deployment order for `espacios.me`.
 
 Drop this component into your frontend and route to it as your Build view.
+
+
+
+pat dashboard 
+
+Dashboard is a tracker where we plan and track and progress. The project that we are working on it shows the granular steps on how we can forward this project. What are the dependencies the requirements and what is expected of this offer basically it's like a planner. it is the blueprint and the architectural design of Pat. The pet dashboard is also tapping on super base for its memory. The design of the Pad that board is like the Pinterest UI but smarter cards as AI will be integrated and AI that is available on vercel. The dashboard will also on vercel and also it is powered by AI. There will be common sections or threads below not below, but within the cards just like how common sections are in Pinterest and it will be an interaction between me and the AI it would allow me to map the dependencies and ask for our input or clarification or explanation or anything from the AI as it is AI power to there's a progress bar we wanna keep it up last colorful as possible we don't want a lot of colors and strictly no emojis to same UI standards and guidelines as the BHAT AI or ChatGPT we will use logos for the software that we are using to represent them and they will be hyperlinked, for example if it is for the API keys, that requirement is for that then it will be hyperlink as to where I can find them as long as I'm signed in on the account 
