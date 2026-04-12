@@ -1,7 +1,7 @@
 PAT AI Assistant
 A clean, minimalist ChatGPT-style AI assistant that learns from your habits, thought process, and workflow to continuously improve.
 Core Features
-•  Clean minimalist ChatGPT-style UI
+•  Clean minimalist ChatGPT-style UI - No emojies and non colorful ui 
 •  Smart Planner
 •  Subtle, data-driven learning system
 •  Voice powered by Mistral (default)
