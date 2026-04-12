@@ -91,3 +91,14 @@ Response Style & Email Management
 	•  She only shows draft replies for emails that actually need a response.
 
 	she can self debug self improve and she is autonomous. As my assistant - she is loyal to me -keiffer
+
+## Build Dashboard Draft
+A ready-to-wire React dashboard component is available in `BuildDashboard.jsx` with an expandable, minimal card UI inspired by your references.
+
+It translates the execution plan into:
+- track cards (A/B/C/D/E/F/G + KB),
+- per-track dependencies and fallbacks,
+- detailed build steps per track,
+- deployment order for `espacios.me`.
+
+Drop this component into your frontend and route to it as your Build view.
