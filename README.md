@@ -52,6 +52,7 @@ A minimal Next.js baseline prepared for local development, Supabase integration,
 - Main chat page at `/`.
 - Build dashboard page at `/dashboard`.
 - Reusable component structure for chat + dashboard.
+- Chat-integrated planning flow that can generate a project dashboard tool from user-provided details.
 - Supabase client scaffolding for browser and server usage.
 
 ## Project structure
@@ -65,6 +66,7 @@ app/
 components/
   chat/ChatShell.jsx
   dashboard/BuildDashboard.jsx
+  dashboard/ProjectDashboardTool.jsx
 lib/
   supabase/
     client.js

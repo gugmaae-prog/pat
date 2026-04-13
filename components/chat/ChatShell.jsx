@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import ProjectDashboardTool from '@/components/dashboard/ProjectDashboardTool';
 
 const quickChoices = [
   'Review today priorities',
@@ -16,10 +17,84 @@ export default function ChatShell() {
     },
   ]);
   const [input, setInput] = useState('');
+  const [plannerStep, setPlannerStep] = useState(0);
+  const [plannerAnswers, setPlannerAnswers] = useState({
+    name: '',
+    goal: '',
+    scope: '',
+    constraints: '',
+  });
+  const [projectDashboard, setProjectDashboard] = useState(null);
+
+  const plannerQuestions = [
+    'Great. What is the project name?',
+    'What is the primary goal for this project?',
+    'What is in scope for phase 1?',
+    'Any constraints, blockers, or non-negotiables?',
+  ];
+
+  const buildProjectDashboard = (answers) => ({
+    name: answers.name,
+    goal: answers.goal,
+    scope: answers.scope,
+    constraints: answers.constraints,
+    phases: [
+      { id: 'P1', name: 'Discovery', status: 'planned', summary: 'Define requirements, constraints, and success criteria.' },
+      { id: 'P2', name: 'Build', status: 'planned', summary: 'Implement dashboard cards, data flow, and planner automation.' },
+      { id: 'P3', name: 'Validate', status: 'planned', summary: 'Run tests, review UX, and confirm business outcomes.' },
+    ],
+    tasks: [
+      { title: 'Confirm goals, scope, and acceptance criteria', done: false },
+      { title: 'Create project card groups (phases, tasks, risks)', done: false },
+      { title: 'Wire chat prompts to dashboard generation', done: false },
+      { title: 'Review with client and iterate', done: false },
+    ],
+    risks: [
+      'Scope expansion without priority controls',
+      'Missing dependencies from external systems',
+      'Insufficient validation before deployment',
+    ],
+    nextActions: [
+      'Approve project dashboard draft',
+      'Assign owners per phase',
+      'Start Phase 1 execution',
+    ],
+  });
 
   const sendMessage = (text) => {
     const cleaned = text.trim();
     if (!cleaned) return;
+
+    if (plannerStep > 0 && plannerStep <= plannerQuestions.length) {
+      const keyByStep = ['name', 'goal', 'scope', 'constraints'];
+      const answerKey = keyByStep[plannerStep - 1];
+      const updatedAnswers = { ...plannerAnswers, [answerKey]: cleaned };
+      setPlannerAnswers(updatedAnswers);
+
+      const nextStep = plannerStep + 1;
+      if (nextStep <= plannerQuestions.length) {
+        setMessages((prev) => [
+          ...prev,
+          { role: 'user', text: cleaned },
+          { role: 'assistant', text: plannerQuestions[nextStep - 1] },
+        ]);
+        setPlannerStep(nextStep);
+      } else {
+        const dashboard = buildProjectDashboard(updatedAnswers);
+        setProjectDashboard(dashboard);
+        setMessages((prev) => [
+          ...prev,
+          { role: 'user', text: cleaned },
+          {
+            role: 'assistant',
+            text: `Perfect. I created a project dashboard for "${updatedAnswers.name}". Review it below and we can refine any phase or task.`,
+          },
+        ]);
+        setPlannerStep(0);
+      }
+      setInput('');
+      return;
+    }
 
     setMessages((prev) => [
       ...prev,
@@ -30,6 +105,19 @@ export default function ChatShell() {
       },
     ]);
     setInput('');
+  };
+
+  const startPlanner = () => {
+    setPlannerAnswers({ name: '', goal: '', scope: '', constraints: '' });
+    setPlannerStep(1);
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: 'assistant',
+        text: 'Let’s plan this. I will ask 4 quick questions, then generate your project dashboard.',
+      },
+      { role: 'assistant', text: plannerQuestions[0] },
+    ]);
   };
 
   return (
@@ -54,6 +142,12 @@ export default function ChatShell() {
                 {choice}
               </button>
             ))}
+            <button
+              onClick={startPlanner}
+              className="rounded-2xl border border-white/35 bg-white text-black px-4 py-2 text-sm font-medium hover:bg-white/90"
+            >
+              Create project dashboard
+            </button>
           </div>
 
           <div className="space-y-3 max-h-[420px] overflow-auto pr-1">
@@ -89,6 +183,8 @@ export default function ChatShell() {
             </button>
           </div>
         </main>
+
+        <ProjectDashboardTool project={projectDashboard} />
       </div>
     </div>
   );
