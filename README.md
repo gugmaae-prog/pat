@@ -1,49 +1,44 @@
-# PAT AI (Next.js Scaffold)
+# PAT AI (Next.js Baseline)
 
-Minimal project scaffold for PAT with a clean black-and-white UI direction, a chat-style homepage on `/`, and the existing dashboard on `/dashboard`.
+A minimalist black-and-white PAT AI frontend prepared for local development, Supabase integration, and Vercel deployment.
 
-## Included foundation
+## What is included
 - Next.js App Router setup.
-- PAT homepage route: `/`.
-- Dashboard route: `/dashboard`.
-- Supabase scaffolding (`client` + `server` helpers).
-- Vercel-ready defaults.
+- Main chat-style page at `/`.
+- Build dashboard page at `/dashboard`.
+- Existing dashboard logic moved into reusable component structure.
+- Supabase client scaffolding for browser and server usage.
 
 ## Project structure
 
 ```txt
 app/
-  dashboard/page.tsx
+  dashboard/page.jsx
   globals.css
-  layout.tsx
-  page.tsx
+  layout.jsx
+  page.jsx
 components/
-  chat/ChatShell.tsx
-  dashboard/BuildDashboard.tsx
+  chat/ChatShell.jsx
+  dashboard/BuildDashboard.jsx
 lib/
   supabase/
-    client.ts
-    server.ts
+    client.js
+    server.js
 .env.example
 next.config.js
-tsconfig.json
+jsconfig.json
 package.json
 ```
 
-## Local run
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-2. Create `.env.local` from `.env.example`.
-3. Run dev server:
-   ```bash
-   npm run dev
-   ```
-4. Open `http://localhost:3000`.
+## Local development
 
-## Environment variables
-Set these in `.env.local` (and in Vercel project settings):
+### 1) Install
+```bash
+npm install
+```
+
+### 2) Configure env
+Create `.env.local` from `.env.example` and set values:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=
@@ -51,19 +46,38 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 ```
 
-Notes:
-- `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are used by browser-safe client access.
-- `SUPABASE_SERVICE_ROLE_KEY` is only for server-side privileged operations.
+### 3) Run locally
+```bash
+npm run dev
+```
+Then open `http://localhost:3000`.
 
-## Build and deploy
-- Local production build:
-  ```bash
-  npm run build
-  npm run start
-  ```
-- Vercel build command: `npm run build`.
-- Node version: `>=20` (declared in `package.json`).
+## Build for production
+```bash
+npm run build
+npm run start
+```
 
-## Routes
-- `/` → PAT chat shell.
-- `/dashboard` → existing PAT dashboard prototype.
+## Supabase integration notes
+- Use `lib/supabase/client.js` for browser-side reads/writes with anon key.
+- Use `lib/supabase/server.js` only in server-side contexts (server actions/route handlers) where service role usage is required.
+- Never expose `SUPABASE_SERVICE_ROLE_KEY` to the browser.
+
+## Vercel deployment
+1. Push this repository to GitHub.
+2. Import the repo in Vercel.
+3. Set the required environment variables in Vercel project settings.
+4. Build command: `npm run build`.
+5. Output: default Next.js output.
+6. Deploy.
+
+## Required environment variables
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` (only needed for server-side privileged operations)
+
+## Deployment readiness checklist
+- `npm install` passes.
+- `npm run build` passes.
+- No unresolved imports.
+- Env vars set in Vercel.
