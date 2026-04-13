@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
-export async function POST(request: Request) {
+export async function POST(request) {
   try {
     const body = await request.json();
     const trackId = String(body?.trackId || '').trim();
