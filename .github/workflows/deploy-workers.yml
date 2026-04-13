@@ -1,0 +1,11 @@
+name: Deploy Supabase Workers
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Configure Supabase CLI deploy steps here."

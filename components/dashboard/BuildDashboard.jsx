@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -175,7 +177,7 @@ function TrackCard({ track, isOpen, onToggle }) {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-5 sm:px-6 pb-6 border-t border-black/8">
+            <div className="px-5 sm:px-6 pb-6 border-t border-black/10">
               <p className="text-sm text-black/70 mt-4">{track.description}</p>
 
               <div className="grid sm:grid-cols-2 gap-3 mt-4 text-sm">
