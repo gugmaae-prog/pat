@@ -1,74 +1,83 @@
-# PAT AI Assistant + Build Dashboard
+# PAT AI (Next.js Baseline)
 
-PAT is a clean, minimalist, ChatGPT-style AI assistant designed to learn from user habits, workflow, and communication patterns.
+A minimalist black-and-white PAT AI frontend prepared for local development, Supabase integration, and Vercel deployment.
 
-## Product Principles
-- Black and white UI only.
-- No emoji in interface copy.
-- Minimal, concise responses.
-- Honest about limitations.
-- Companion-like communication style.
+## What is included
+- Next.js App Router setup.
+- Main chat-style page at `/`.
+- Build dashboard page at `/dashboard`.
+- Existing dashboard logic moved into reusable component structure.
+- Supabase client scaffolding for browser and server usage.
 
-## Core Capabilities
-- Smart planner for projects and execution.
-- Background learning from recurring topics and behavior.
-- Voice support (Mistral default).
-- Photo/image understanding.
-- Google Drive processing.
-- Email triage + draft generation.
-- CRM + campaign workflow support.
-- Botspace integration for marketing learning loops.
+## Project structure
 
-## Learning Model (Subtle + Data-Driven)
-PAT learns quietly by:
-- Logging lookup topics and repeated intents.
-- Connecting patterns across conversations, files, and outcomes.
-- Researching online when needed.
-- Recording decision + outcome pairs to improve future suggestions.
+```txt
+app/
+  dashboard/page.jsx
+  globals.css
+  layout.jsx
+  page.jsx
+components/
+  chat/ChatShell.jsx
+  dashboard/BuildDashboard.jsx
+lib/
+  supabase/
+    client.js
+    server.js
+.env.example
+next.config.js
+jsconfig.json
+package.json
+```
 
-## Communication and Decision UX
-- Button-first interaction for yes/no or multiple-choice prompts.
-- Card-based decision UI with:
-  - pros and cons,
-  - probability estimate,
-  - expected outcome,
-  - recommended next steps.
-- Cards should support expansion for detail (Pinterest-style interaction model).
+## Local development
 
-## Email Behavior Goals
-- Identify messages that need replies vs. no-reply/promotional/system mail.
-- Auto-create draft replies only when a response is needed.
-- Prompt with a clear binary question: “Would you like me to reply to this?”
+### 1) Install
+```bash
+npm install
+```
 
-## Tech Stack
-- Frontend: Next.js + React (Vercel)
-- Backend: Flask (Python)
-- Database/memory: Supabase
-- Voice: Mistral
-- Models/APIs: Mistral, Groq, Gemini (round-robin), Botspace API
+### 2) Configure env
+Create `.env.local` from `.env.example` and set values:
 
-## Build Dashboard
-`BuildDashboard.jsx` is a ready-to-wire React dashboard that includes:
-- Track cards (A/B/C/D/E/F/G + KB)
-- Dependencies and fallback paths
-- Build steps per track
-- Deployment sequence
-- Expandable decision cards with probabilities and next actions
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+```
 
-### Current Track Set
-- A: Supabase Memory Migration
-- KB: Knowledge Base
-- B: Vector Learning
-- C: Data Processing Engine
-- D: Email Marketing System
-- E: Vercel Frontend
-- F: Email Identity (Resend)
-- G: Domain + DNS Management
+### 3) Run locally
+```bash
+npm run dev
+```
+Then open `http://localhost:3000`.
 
-## Deployment Order (Target: espacios.me)
-1. Finish Phase 0 and Phase 1, including KB.
-2. Update ECS Nginx for `/api/*` and `/api/memory`.
-3. Deploy frontend to Vercel at `pat.espacios.me`.
-4. Point Cloudflare CNAME to Vercel.
-5. Restart container (`docker restart void-aether-app`).
-6. Run end-to-end tests on `https://espacios.me`.
+## Build for production
+```bash
+npm run build
+npm run start
+```
+
+## Supabase integration notes
+- Use `lib/supabase/client.js` for browser-side reads/writes with anon key.
+- Use `lib/supabase/server.js` only in server-side contexts (server actions/route handlers) where service role usage is required.
+- Never expose `SUPABASE_SERVICE_ROLE_KEY` to the browser.
+
+## Vercel deployment
+1. Push this repository to GitHub.
+2. Import the repo in Vercel.
+3. Set the required environment variables in Vercel project settings.
+4. Build command: `npm run build`.
+5. Output: default Next.js output.
+6. Deploy.
+
+## Required environment variables
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` (only needed for server-side privileged operations)
+
+## Deployment readiness checklist
+- `npm install` passes.
+- `npm run build` passes.
+- No unresolved imports.
+- Env vars set in Vercel.

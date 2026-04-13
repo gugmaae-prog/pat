@@ -1,3 +1,6 @@
+'use client';
+
+import Link from 'next/link';
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -297,11 +300,7 @@ function StatusPill({ status }) {
 function DecisionCard({ option, isOpen, onToggle }) {
   return (
     <div className="rounded-2xl border border-white/15 bg-white/5">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full px-4 py-3 text-left flex items-center justify-between"
-      >
+      <button type="button" onClick={onToggle} className="w-full px-4 py-3 text-left flex items-center justify-between">
         <div>
           <p className="text-sm font-medium">{option.title}</p>
           <p className="text-xs text-white/60 mt-1">Probability: {Math.round(option.probability * 100)}%</p>
@@ -312,7 +311,6 @@ function DecisionCard({ option, isOpen, onToggle }) {
       {isOpen && (
         <div className="px-4 pb-4 border-t border-white/10">
           <p className="text-sm text-white/80 mt-3">Expected outcome: {option.expectedOutcome}</p>
-
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             <div className="rounded-xl border border-white/10 bg-black/30 p-3">
               <p className="text-xs uppercase tracking-[0.2em] text-white/50 mb-2">Pros</p>
@@ -365,8 +363,15 @@ export default function BuildDashboard() {
       <div className="mx-auto max-w-7xl grid gap-6 lg:grid-cols-[1fr_380px]">
         <section>
           <header className="rounded-3xl border border-white/15 bg-white/5 p-6 mb-6">
-            <p className="text-xs uppercase tracking-[0.3em] text-white/60">PAT Build</p>
-            <h1 className="text-3xl font-semibold mt-2">Execution Dashboard</h1>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-white/60">PAT Build</p>
+                <h1 className="text-3xl font-semibold mt-2">Execution Dashboard</h1>
+              </div>
+              <Link href="/" className="rounded-lg border border-white/25 bg-white/5 px-3 py-2 text-sm">
+                Back to Chat
+              </Link>
+            </div>
             <p className="text-white/70 mt-3 max-w-3xl">
               Planner view for PAT: dependencies, fallback paths, and decision cards with probability and expected outcomes.
             </p>
