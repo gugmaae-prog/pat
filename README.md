@@ -81,3 +81,19 @@ npm run start
 - `npm run build` passes.
 - No unresolved imports.
 - Env vars set in Vercel.
+
+
+## GitHub + Vercel + Supabase automation
+This repo now includes automation glue:
+- GitHub Actions CI: `.github/workflows/ci.yml`
+- Supabase worker deploy workflow: `.github/workflows/deploy-workers.yml`
+- Vercel cron schedule: `vercel.json` (`/api/workers/sync` every 15 minutes)
+- Supabase Edge Function worker: `supabase/functions/sync-worker/index.ts`
+- Audit report: `docs/FULL_STACK_AUDIT.md`
+
+### Required GitHub repository secrets
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_ACCESS_TOKEN`
+- `SUPABASE_PROJECT_REF`
