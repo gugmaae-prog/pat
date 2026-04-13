@@ -121,8 +121,8 @@ npm run start
 - `SUPABASE_SERVICE_ROLE_KEY`
 
 ## Deployment readiness checklist
-- `npm install` passes.
-- `npm run build` passes.
+- `npm install` executes successfully in your environment.
+- `npm run build` executes successfully in your environment.
 - No unresolved imports.
 - Environment variables configured.
 
