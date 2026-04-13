@@ -86,6 +86,7 @@ npm run start
 ## GitHub + Vercel + Supabase automation
 This repo now includes automation glue:
 - GitHub Actions CI: `.github/workflows/ci.yml`
+- Web deploy workflow: `.github/workflows/deploy-web.yml`
 - Supabase worker deploy workflow: `.github/workflows/deploy-workers.yml`
 - Vercel cron schedule: `vercel.json` (`/api/workers/sync` every 15 minutes)
 - Supabase Edge Function worker: `supabase/functions/sync-worker/index.ts`
@@ -97,3 +98,6 @@ This repo now includes automation glue:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `SUPABASE_ACCESS_TOKEN`
 - `SUPABASE_PROJECT_REF`
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
