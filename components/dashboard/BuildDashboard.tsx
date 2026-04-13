@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   Brain,
@@ -286,6 +287,19 @@ const deploymentSteps = [
   'Run end-to-end test on https://espacios.me.',
 ];
 
+const programUpdates = [
+  {
+    label: 'PAT system',
+    value: 'Operational baseline',
+    detail: 'Core assistant and navigation are deployed in the app shell.',
+  },
+  {
+    label: 'Dashboard',
+    value: 'Execution view ready',
+    detail: 'Track status, dependencies, and decision cards are active.',
+  },
+];
+
 const statusStyle = {
   done: 'text-white bg-white/15 border-white/40',
   in_progress: 'text-white bg-white/10 border-white/25',
@@ -297,7 +311,7 @@ function StatusPill({ status }) {
   return <span className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.2em] ${statusStyle[status]}`}>{label}</span>;
 }
 
-function DecisionCard({ option, isOpen, onToggle }) {
+function DecisionCard({ option, isOpen, onToggle, onChoose, onAskRevision }) {
   return (
     <div className="rounded-2xl border border-white/15 bg-white/5">
       <button type="button" onClick={onToggle} className="w-full px-4 py-3 text-left flex items-center justify-between">
@@ -340,8 +354,12 @@ function DecisionCard({ option, isOpen, onToggle }) {
           </div>
 
           <div className="mt-3 flex gap-2">
-            <button className="px-3 py-2 text-sm rounded-lg border border-white/30 bg-white/10">Choose this path</button>
-            <button className="px-3 py-2 text-sm rounded-lg border border-white/15 bg-black/40">Ask AI for revision</button>
+            <button type="button" onClick={onChoose} className="px-3 py-2 text-sm rounded-lg border border-white/30 bg-white/10">
+              Choose this path
+            </button>
+            <button type="button" onClick={onAskRevision} className="px-3 py-2 text-sm rounded-lg border border-white/15 bg-black/40">
+              Ask AI for revision
+            </button>
           </div>
         </div>
       )}
@@ -352,11 +370,59 @@ function DecisionCard({ option, isOpen, onToggle }) {
 export default function BuildDashboard() {
   const [active, setActive] = useState(tracks[0]);
   const [expandedDecision, setExpandedDecision] = useState(null);
+  const [healthCounts, setHealthCounts] = useState({ memories: 0, facts: 0, chats: 0 });
+  const [workerStatus, setWorkerStatus] = useState('Unknown');
+  const router = useRouter();
 
   const progress = useMemo(() => {
     const done = tracks.filter((track) => track.status === 'done').length;
     return Math.round((done / tracks.length) * 100);
   }, []);
+
+  useEffect(() => {
+    const loadHealth = async () => {
+      try {
+        const response = await fetch('/api/health');
+        const payload = await response.json();
+
+        if (!response.ok || !payload?.ok) {
+          setWorkerStatus('Offline');
+          return;
+        }
+
+        setHealthCounts(payload.counts || { memories: 0, facts: 0, chats: 0 });
+        const heartbeatTime = payload.latestHeartbeat?.heartbeat_at;
+        if (!heartbeatTime) {
+          setWorkerStatus('Offline');
+          return;
+        }
+
+        const minutesAgo = (Date.now() - new Date(heartbeatTime).getTime()) / 60000;
+        setWorkerStatus(minutesAgo <= 20 ? 'Online' : 'Offline');
+      } catch {
+        setWorkerStatus('Offline');
+      }
+    };
+
+    loadHealth();
+  }, []);
+
+  const handleChoosePath = async (option) => {
+    await fetch('/api/decisions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        trackId: active.id,
+        optionId: option.id,
+        title: `${active.id} - ${option.title}`,
+      }),
+    });
+  };
+
+  const handleAskForRevision = (option) => {
+    const prompt = `Revise this decision path for ${active.id} ${active.name}: ${option.title}. Expected outcome: ${option.expectedOutcome}`;
+    router.push(`/?prefill=${encodeURIComponent(prompt)}`);
+  };
 
   return (
     <div className="min-h-screen bg-black text-white p-6 md:p-10">
@@ -377,6 +443,21 @@ export default function BuildDashboard() {
             </p>
             <div className="mt-4 text-sm text-white/70 flex items-center gap-2">
               <GitBranch className="w-4 h-4" /> Overall completion: {progress}%
+            </div>
+            <div className="mt-3 text-xs text-white/70 flex flex-wrap gap-4">
+              <span>Memories: {healthCounts.memories}</span>
+              <span>Facts: {healthCounts.facts}</span>
+              <span>Chats: {healthCounts.chats}</span>
+              <span>System: {workerStatus}</span>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {programUpdates.map((item) => (
+                <div key={item.label} className="rounded-2xl border border-white/10 bg-black/35 p-3">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/50">{item.label}</p>
+                  <p className="text-sm font-medium mt-1">{item.value}</p>
+                  <p className="text-xs text-white/70 mt-1">{item.detail}</p>
+                </div>
+              ))}
             </div>
           </header>
 
@@ -431,6 +512,8 @@ export default function BuildDashboard() {
                   option={option}
                   isOpen={expandedDecision === option.id}
                   onToggle={() => setExpandedDecision(expandedDecision === option.id ? null : option.id)}
+                  onChoose={() => handleChoosePath(option)}
+                  onAskRevision={() => handleAskForRevision(option)}
                 />
               ))}
             </div>
