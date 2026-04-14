@@ -1,0 +1,8 @@
+supabase/
+app/page.jsx
+app/layout.jsx
+app/dashboard/page.jsx
+components/chat/ChatShell.jsx
+components/dashboard/BuildDashboard.jsx
+lib/supabase/client.js
+lib/supabase/server.js
