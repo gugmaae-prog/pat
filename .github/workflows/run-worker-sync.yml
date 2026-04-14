@@ -1,0 +1,19 @@
+name: Run Worker Sync
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping-worker-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger worker sync endpoint
+        run: |
+          curl --fail --show-error --silent \
+            --max-time 30 \
+            "$WORKER_SYNC_URL"
+        env:
+          WORKER_SYNC_URL: ${{ secrets.WORKER_SYNC_URL }}

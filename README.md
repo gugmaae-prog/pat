@@ -88,7 +88,8 @@ This repo now includes automation glue:
 - GitHub Actions CI: `.github/workflows/ci.yml`
 - Web deploy workflow: `.github/workflows/deploy-web.yml`
 - Supabase worker deploy workflow: `.github/workflows/deploy-workers.yml`
-- Vercel cron schedule: `vercel.json` (`/api/workers/sync` every 15 minutes)
+- Vercel cron schedule: `vercel.json` (`/api/workers/sync` once daily at 00:00 UTC)
+- GitHub Actions heartbeat schedule: `.github/workflows/run-worker-sync.yml` (calls `/api/workers/sync` every 15 minutes)
 - Supabase Edge Function worker: `supabase/functions/sync-worker/index.ts`
 - Audit report: `docs/FULL_STACK_AUDIT.md`
 
@@ -101,3 +102,4 @@ This repo now includes automation glue:
 - `VERCEL_TOKEN`
 - `VERCEL_ORG_ID`
 - `VERCEL_PROJECT_ID`
+- `WORKER_SYNC_URL` (e.g. `https://your-app.vercel.app/api/workers/sync`)
