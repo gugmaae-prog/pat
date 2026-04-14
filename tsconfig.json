@@ -19,6 +19,21 @@
     },
     "plugins": [{ "name": "next" }]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "app/**/*.js",
+    "app/**/*.jsx",
+    "components/**/*.ts",
+    "components/**/*.tsx",
+    "components/**/*.js",
+    "components/**/*.jsx",
+    "lib/**/*.ts",
+    "lib/**/*.tsx",
+    "lib/**/*.js",
+    "lib/**/*.jsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": ["node_modules", "supabase/**"]
 }
