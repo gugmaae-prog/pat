@@ -1,72 +1,109 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { generateReply } from '@/lib/ai/router';
+import type { ChatMessage, Modality, ProviderName } from '@/lib/ai/types';
 
-function buildReply(message: string) {
-  const normalized = message.toLowerCase();
+function isProviderName(value: unknown): value is ProviderName {
+  return value === 'groq' || value === 'mistral' || value === 'qwen';
+}
 
-  if (normalized.includes('inbox') || normalized.includes('email')) {
-    return [
-      'Here is a focused inbox plan:',
-      '1. Pull unread, flagged, and high-priority threads from the last 48 hours.',
-      '2. Group them into reply now, delegate, and archive.',
-      '3. Draft responses for the reply now bucket first.',
-      '',
-      'Send me a specific inbox goal and I will turn it into an action list.',
-    ].join('\n');
+function isModality(value: unknown): value is Modality {
+  return value === 'text' || value === 'vision' || value === 'audio';
+}
+
+function textFromContent(content: unknown): string {
+  if (typeof content === 'string') {
+    return content.trim();
   }
 
-  if (normalized.includes('dashboard') || normalized.includes('decision') || normalized.includes('roadmap')) {
-    return [
-      'I can help turn the dashboard into next actions.',
-      '',
-      'Suggested flow:',
-      '- choose the track that is blocked',
-      '- save the path you want',
-      '- ask for a revision if you need a lower-risk option',
-      '',
-      'Tell me which track you want to work on and I will summarize the next move.',
-    ].join('\n');
+  if (Array.isArray(content)) {
+    return content
+      .map((item) => {
+        if (typeof item === 'string') return item;
+        if (item && typeof item === 'object') {
+          const record = item as Record<string, unknown>;
+          if (typeof record.text === 'string') return record.text;
+          if (typeof record.content === 'string') return record.content;
+        }
+        return '';
+      })
+      .join('\n')
+      .trim();
   }
 
-  if (normalized.includes('follow') || normalized.includes('lead') || normalized.includes('reply')) {
-    return [
-      'Here is a clean follow-up sequence:',
-      '1. Identify contacts with no reply in the last 5 days.',
-      '2. Segment them by warm, active, and cold status.',
-      '3. Draft one short, specific follow-up per segment.',
-      '',
-      'I can also help draft the first version right away.',
-    ].join('\n');
-  }
+  return '';
+}
 
-  return [
-    'Got it — I can help with that.',
-    '',
-    `Your prompt: "${message}"`,
-    '',
-    'Best next step: give me the exact outcome you want and I will turn it into a clearer action plan or draft.',
-  ].join('\n');
+function lastUserText(messages: ChatMessage[]) {
+  const lastUserMessage = [...messages].reverse().find((message) => message.role === 'user');
+  return lastUserMessage ? textFromContent(lastUserMessage.content) : '';
 }
 
 export async function POST(request: Request) {
   const body = await request.json();
+  const provider = isProviderName(body?.provider) ? body.provider : undefined;
+  const modality = isModality(body?.modality) ? body.modality : 'text';
   const message = String(body?.message || '').trim();
 
-  if (!message) {
+  const messages: ChatMessage[] = Array.isArray(body?.messages) && body.messages.length
+    ? body.messages
+    : [
+        {
+          role: 'system',
+          content:
+            'You are PAT, a concise and practical executive assistant. Be clear, structured, and action-oriented.',
+        },
+        {
+          role: 'user',
+          content: message,
+        },
+      ];
+
+  const userText = message || lastUserText(messages);
+
+  if (!userText) {
     return NextResponse.json({ ok: false, message: 'Message is required.' }, { status: 400 });
   }
 
-  const reply = buildReply(message);
-
   try {
-    const supabase = createSupabaseServerClient();
-    await supabase.from('cards').insert([
-      { card_type: 'chat', content: message, metadata: { role: 'user' } },
-      { card_type: 'chat', content: reply, metadata: { role: 'assistant' } },
-    ]);
-  } catch {
-    // non-blocking fallback: keep chat responsive even if DB write fails
-  }
+    const result = await generateReply({
+      messages,
+      provider,
+      modality,
+    });
 
-  return NextResponse.json({ ok: true, reply });
+    try {
+      const supabase = createSupabaseServerClient();
+      await supabase.from('cards').insert([
+        {
+          card_type: 'chat',
+          content: userText,
+          metadata: { role: 'user', provider: result.provider, modality: result.modality },
+        },
+        {
+          card_type: 'chat',
+          content: result.reply,
+          metadata: {
+            role: 'assistant',
+            provider: result.provider,
+            modality: result.modality,
+            model: result.model,
+          },
+        },
+      ]);
+    } catch {
+      // keep chat responsive even if DB write fails
+    }
+
+    return NextResponse.json({
+      ok: true,
+      reply: result.reply,
+      provider: result.provider,
+      modality: result.modality,
+      model: result.model,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'All AI providers failed';
+    return NextResponse.json({ ok: false, message }, { status: 500 });
+  }
 }
