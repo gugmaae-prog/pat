@@ -1,7 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 type Message = {
@@ -9,36 +8,20 @@ type Message = {
   content: string;
 };
 
-type HealthData = {
-  counts: {
-    memories: number;
-    facts: number;
-    chats: number;
-  };
-};
-
-const suggestedActions = [
-  'Review my inbox and pull only priority emails.',
-  'Draft replies for urgent client threads.',
-  'Summarize decisions made in the dashboard today.',
-  'Plan follow-ups for leads with no response in 5 days.',
-];
-
-const autonomousSignals = [
-  'Background inbox triage enabled',
-  'Priority detection: active',
-  'Learning loop: adapting from edits',
+const quickPrompts = [
+  'Create a launch checklist for today.',
+  'Summarize my top priorities in 3 bullets.',
+  'Draft a friendly follow-up message for a client.',
+  'Give me one focused task for the next 30 minutes.',
 ];
 
 export default function ChatShell() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [health, setHealth] = useState<HealthData['counts']>({ memories: 0, facts: 0, chats: 0 });
   const [isSending, setIsSending] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
-
-  const showSuggestions = messages.length === 0;
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -53,26 +36,8 @@ export default function ChatShell() {
   }, [searchParams]);
 
   useEffect(() => {
-    const load = async () => {
-      const [healthRes, memoryRes] = await Promise.allSettled([fetch('/api/health'), fetch('/api/memories')]);
-
-      if (healthRes.status === 'fulfilled' && healthRes.value.ok) {
-        const payload = await healthRes.value.json();
-        setHealth(payload.counts || { memories: 0, facts: 0, chats: 0 });
-      }
-
-      if (memoryRes.status === 'fulfilled' && memoryRes.value.ok) {
-        const payload = await memoryRes.value.json();
-        const loaded = (payload.messages || []).map((row: any) => ({
-          role: row.metadata?.role === 'assistant' ? 'assistant' : 'user',
-          content: row.content || '',
-        }));
-        setMessages(loaded);
-      }
-    };
-
-    load();
-  }, []);
+    endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages, isSending]);
 
   const sendMessage = async (text: string) => {
     const trimmed = text.trim();
@@ -90,82 +55,57 @@ export default function ChatShell() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: trimmed }),
       });
+
       const payload = await response.json();
-      const reply = payload.reply || 'PAT could not generate a response.';
+      const reply = payload.reply || 'kt pat sys is online, but no response was generated.';
       setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
     } catch {
-      setMessages((prev) => [...prev, { role: 'assistant', content: 'Network issue while reaching PAT backend.' }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: 'Network issue while reaching kt pat sys. Please try again.',
+        },
+      ]);
     } finally {
       setIsSending(false);
       inputRef.current?.focus();
     }
   };
 
-  const statusText = useMemo(
-    () => `Memories ${health.memories} • Facts ${health.facts} • Chats ${health.chats}`,
-    [health],
-  );
-
   return (
-    <main className="shell">
-      <aside className="rail">
-        <div className="rail-card brand">
-          <p className="rail-label">PAT</p>
-          <h1>Autonomous Assistant</h1>
-          <p>Black + white, sleek, and focused. Learns from your flow.</p>
-        </div>
-
-        <div className="rail-card">
-          <p className="rail-label">Autonomy</p>
-          <ul>
-            {autonomousSignals.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="rail-card">
-          <p className="rail-label">System</p>
-          <p>{statusText}</p>
-        </div>
-
-        <Link href="/dashboard" className="dashboard-link">
-          Open Build Dashboard
-        </Link>
-      </aside>
-
-      <section className="chat-panel">
-        <header className="chat-header">
-          <div>
-            <p className="rail-label">Conversation</p>
-            <h2>PAT</h2>
+    <main className="chat-app">
+      <section className="chat-card" aria-label="kt pat sys chat interface">
+        <header className="top-bar">
+          <div className="brand-wrap">
+            <p className="brand-label">Thinking</p>
+            <h1>kt pat sys</h1>
           </div>
-          <span className="dot">Live</span>
+          <span className="status-pill">Live</span>
         </header>
 
-        <div className="chat-window">
+        <section className="messages" aria-live="polite">
           {messages.length === 0 ? (
-            <div className="message assistant">
-              I am on standby. I can review inbox activity in the background, surface priorities, and draft next actions.
+            <div className="empty-state">
+              <p>Start a conversation with kt pat sys.</p>
+              <div className="prompt-grid">
+                {quickPrompts.map((prompt) => (
+                  <button key={prompt} type="button" onClick={() => sendMessage(prompt)}>
+                    {prompt}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             messages.map((message, index) => (
-              <div key={`${message.role}-${index}`} className={`message ${message.role}`}>
+              <article key={`${message.role}-${index}`} className={`bubble ${message.role}`}>
                 {message.content}
-              </div>
+              </article>
             ))
           )}
-        </div>
-
-        {showSuggestions && (
-          <div className="suggestions">
-            {suggestedActions.map((item) => (
-              <button key={item} type="button" onClick={() => sendMessage(item)}>
-                {item}
-              </button>
-            ))}
-          </div>
-        )}
+          {isSending && <article className="bubble assistant">Thinking…</article>}
+          <div ref={endRef} />
+        </section>
 
         <form
           className="composer"
@@ -176,43 +116,255 @@ export default function ChatShell() {
         >
           <input
             ref={inputRef}
-            placeholder="Message PAT"
-            aria-label="Message PAT"
             value={input}
             onChange={(event) => setInput(event.target.value)}
+            placeholder="Message kt pat sys"
+            aria-label="Message kt pat sys"
           />
-          <button type="submit" disabled={isSending}>
-            {isSending ? 'Sending…' : 'Send'}
+          <button type="submit" disabled={isSending || input.trim().length === 0}>
+            Send
           </button>
         </form>
       </section>
 
       <style jsx>{`
-        .shell { min-height: 100vh; display: grid; grid-template-columns: 300px 1fr; gap: 18px; padding: 18px; max-width: 1300px; margin: 0 auto; }
-        .rail { display: grid; gap: 12px; align-content: start; }
-        .rail-card { border: 1px solid rgba(255,255,255,0.12); border-radius: 24px; background: rgba(255,255,255,0.03); padding: 16px; }
-        .rail-card h1 { margin: 6px 0 8px; font-size: 22px; font-weight: 600; }
-        .rail-card p { margin: 0; color: rgba(255,255,255,0.8); }
-        .rail-label { margin: 0; text-transform: uppercase; letter-spacing: .14em; font-size: 11px; color: rgba(255,255,255,.58); }
-        ul { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 8px; color: rgba(255,255,255,.84); }
-        .dashboard-link { border: 1px solid rgba(255,255,255,0.2); border-radius: 999px; padding: 12px 14px; text-align: center; background: rgba(255,255,255,0.06); }
-        .chat-panel { border: 1px solid rgba(255,255,255,0.12); border-radius: 30px; background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)); padding: 14px; display: grid; gap: 12px; }
-        .chat-header { display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 12px 14px; }
-        h2 { margin: 4px 0 0; font-size: 22px; font-weight: 600; }
-        .dot { border: 1px solid rgba(255,255,255,.26); border-radius: 999px; padding: 6px 10px; font-size: 12px; background: rgba(255,255,255,.08); }
-        .chat-window { min-height: 58vh; max-height: 62vh; overflow: auto; display: grid; gap: 10px; align-content: start; border: 1px solid rgba(255,255,255,0.12); border-radius: 24px; padding: 14px; background: rgba(0,0,0,0.35); }
-        .message { max-width: min(90%, 720px); border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 13px 14px; line-height: 1.45; }
-        .message.assistant { background: rgba(255,255,255,0.06); }
-        .message.user { margin-left: auto; background: rgba(255,255,255,0.12); }
-        .suggestions { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        .suggestions button { text-align: left; border: 1px solid rgba(255,255,255,0.14); border-radius: 16px; background: rgba(255,255,255,0.05); color: white; padding: 11px 12px; }
-        .composer { display: grid; grid-template-columns: 1fr auto; gap: 10px; border: 1px solid rgba(255,255,255,0.16); border-radius: 18px; padding: 8px; background: rgba(255,255,255,0.03); }
-        .composer input { background: transparent; border: 0; outline: none; color: white; padding: 10px; }
-        .composer button { border: 1px solid rgba(255,255,255,0.25); border-radius: 14px; background: rgba(255,255,255,0.1); color: white; padding: 10px 14px; }
-        @media (max-width: 980px) {
-          .shell { grid-template-columns: 1fr; }
-          .suggestions { grid-template-columns: 1fr; }
-          .chat-window { min-height: 52vh; }
+        .chat-app {
+          min-height: 100vh;
+          min-height: 100dvh;
+          display: grid;
+          place-items: center;
+          padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right))
+            max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+          background: #ffffff;
+          color: #111111;
+        }
+
+        .chat-card {
+          width: min(980px, 100%);
+          height: min(92vh, 920px);
+          height: min(92dvh, 920px);
+          display: grid;
+          grid-template-rows: auto 1fr auto;
+          gap: 14px;
+          padding: clamp(12px, 2.4vw, 24px);
+          border: 1px solid rgba(17, 17, 17, 0.1);
+          border-radius: clamp(22px, 3.2vw, 34px);
+          background: rgba(255, 255, 255, 0.88);
+          box-shadow: 0 24px 48px rgba(16, 24, 40, 0.14);
+          backdrop-filter: blur(18px);
+          -webkit-backdrop-filter: blur(18px);
+        }
+
+        .top-bar {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 10px;
+          padding: 12px;
+          border: 1px solid rgba(17, 17, 17, 0.08);
+          border-radius: 18px;
+          background: rgba(255, 255, 255, 0.7);
+        }
+
+        .brand-wrap h1 {
+          margin: 2px 0 0;
+          font-size: clamp(24px, 3.2vw, 34px);
+          letter-spacing: 0.01em;
+        }
+
+        .brand-label {
+          margin: 0;
+          font-size: 12px;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: rgba(17, 17, 17, 0.56);
+        }
+
+        .status-pill {
+          padding: 8px 12px;
+          border-radius: 999px;
+          font-size: 12px;
+          border: 1px solid rgba(17, 17, 17, 0.14);
+          background: rgba(255, 255, 255, 0.9);
+        }
+
+        .messages {
+          overflow: auto;
+          border: 1px solid rgba(17, 17, 17, 0.08);
+          border-radius: 22px;
+          padding: 14px;
+          display: grid;
+          align-content: start;
+          gap: 10px;
+          background: rgba(249, 249, 251, 0.92);
+          overscroll-behavior: contain;
+        }
+
+        .empty-state {
+          display: grid;
+          gap: 14px;
+        }
+
+        .empty-state p {
+          margin: 0;
+          color: rgba(17, 17, 17, 0.74);
+        }
+
+        .prompt-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .prompt-grid button {
+          border: 1px solid rgba(17, 17, 17, 0.12);
+          border-radius: 16px;
+          background: rgba(255, 255, 255, 0.9);
+          color: #111111;
+          padding: 10px 12px;
+          font: inherit;
+          transition: transform 120ms ease, background-color 120ms ease;
+        }
+
+        .composer button {
+          border: 1px solid rgba(17, 17, 17, 0.12);
+          border-radius: 16px;
+          background: #111111;
+          color: #ffffff;
+          padding: 10px 14px;
+          font: inherit;
+          transition: transform 120ms ease, background-color 120ms ease;
+        }
+
+        .prompt-grid button:hover {
+          transform: translateY(-1px);
+          background: rgba(17, 17, 17, 0.06);
+          cursor: pointer;
+        }
+
+        .composer button:hover:not(:disabled) {
+          transform: translateY(-1px);
+          background: #222222;
+          cursor: pointer;
+        }
+
+        .bubble {
+          max-width: min(88%, 720px);
+          border-radius: 18px;
+          padding: 11px 12px;
+          line-height: 1.45;
+          border: 1px solid rgba(17, 17, 17, 0.1);
+        }
+
+        .bubble.assistant {
+          background: rgba(255, 255, 255, 0.95);
+          justify-self: start;
+        }
+
+        .bubble.user {
+          background: rgba(17, 17, 17, 0.08);
+          justify-self: end;
+        }
+
+        .composer {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 10px;
+          border: 1px solid rgba(17, 17, 17, 0.12);
+          border-radius: 18px;
+          padding: 8px;
+          background: rgba(255, 255, 255, 0.88);
+          position: sticky;
+          bottom: 0;
+        }
+
+        .composer input {
+          border: 0;
+          outline: none;
+          background: transparent;
+          color: #111111;
+          font: inherit;
+          padding: 10px;
+        }
+
+        .composer input::placeholder {
+          color: rgba(17, 17, 17, 0.4);
+        }
+
+        .composer button:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        @media (max-width: 740px) {
+          .chat-card {
+            height: calc(100dvh - 8px);
+            border-radius: 20px;
+            padding: 10px;
+          }
+
+          .prompt-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .top-bar {
+            padding: 10px;
+          }
+
+          .status-pill {
+            font-size: 11px;
+          }
+
+          .composer {
+            grid-template-columns: 1fr;
+          }
+
+          .composer button {
+            width: 100%;
+          }
+        }
+
+        @media (max-height: 560px) and (orientation: landscape) {
+          .chat-app {
+            place-items: stretch;
+            padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+              max(6px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+          }
+
+          .chat-card {
+            width: 100%;
+            height: calc(100dvh - 8px);
+            border-radius: 16px;
+            padding: 8px;
+            gap: 8px;
+          }
+
+          .top-bar {
+            padding: 8px 10px;
+          }
+
+          .brand-wrap h1 {
+            font-size: clamp(18px, 2.2vw, 24px);
+          }
+
+          .messages {
+            padding: 10px;
+            gap: 8px;
+          }
+
+          .bubble {
+            max-width: 94%;
+            padding: 9px 10px;
+          }
+
+          .composer {
+            padding: 6px;
+            gap: 8px;
+          }
+
+          .composer input {
+            padding: 8px;
+          }
         }
       `}</style>
     </main>
